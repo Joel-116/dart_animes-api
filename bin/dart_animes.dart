@@ -7,7 +7,14 @@ const String gistRawUrl =
 const String gistId =
     "https://api.github.com/gists/98da7e34252e27f87f1e875080e62365";
 
-void main() {}
+void main() {
+  sendDataAsync({
+    "name": "Megumi Fushiguro",
+    "age": 16,
+    "anime": "Jujutsu Kaisen",
+    "energy": "Juryoku",
+  });
+}
 
 Future<List<dynamic>> fetchLiveList() async {
   Response response = await get(
@@ -56,14 +63,46 @@ Future<void> requestAnime(String anime) async {
   }
 }
 
-Future<void> sendDataAsync(Map<String, dynamic> mapAccount) async {
-  List<dynamic> listAccounts = await fetchLiveList();
-  listAccounts.add(mapAccount);
-  // Antes: String content = json.encode(listAccounts);
+Future<void> deleteCharacter(String name) async {
+  List<dynamic> listCharacter = await fetchLiveList();
+  
+  int originalLength = listCharacter.length;
 
-  // Depois (Com 2 espaços de identação):
+  listCharacter.removeWhere((character) => 
+    character["name"].toString().toLowerCase() == name.toLowerCase());
+
+  if (listCharacter.length == originalLength) {
+    print("Nenhum personagem encontrado com o nome: $name");
+    return;
+  }
+
   JsonEncoder encoder = JsonEncoder.withIndent('  ');
-  String content = encoder.convert(listAccounts);
+  String content = encoder.convert(listCharacter);
+
+  Response response = await patch(
+    Uri.parse(gistId),
+    headers: {"Authorization": "Bearer $githubApiKey"},
+    body: json.encode({
+      "description": "animes.json",
+      "files": {
+        "animes.json": {"content": content},
+      },
+    }),
+  );
+
+  if (response.statusCode == 200) {
+    print("Personagem '$name' removido com sucesso!");
+  } else {
+    print("Erro ao deletar: ${response.statusCode}");
+  }
+}
+
+Future<void> sendDataAsync(Map<String, dynamic> mapCharacter) async {
+  List<dynamic> listCharacter = await fetchLiveList();
+  listCharacter.add(mapCharacter);
+  
+  JsonEncoder encoder = JsonEncoder.withIndent('  ');
+  String content = encoder.convert(listCharacter);
 
   String url = gistId;
 
