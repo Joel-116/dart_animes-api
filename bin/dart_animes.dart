@@ -8,12 +8,7 @@ const String gistId =
     "https://api.github.com/gists/98da7e34252e27f87f1e875080e62365";
 
 void main() {
-  sendDataAsync({
-    "name": "Yuji Itadori",
-    "age": 17,
-    "anime": "Jujutsu Kaisen",
-    "energy": "Juryoku",
-  });
+  requestAge(16);
 }
 
 Future<List<dynamic>> fetchLiveList() async {
@@ -31,7 +26,7 @@ Future<List<dynamic>> fetchLiveList() async {
 }
 
 void requestEnergy(String energy) async {
-  List<dynamic> characters = await fetchLiveList(); 
+  List<dynamic> characters = await fetchLiveList();
   for (var character in characters) {
     if (character["energy"] == energy) {
       print("O personagem ${character["name"]} usa a energia $energy");
@@ -40,10 +35,10 @@ void requestEnergy(String energy) async {
 }
 
 Future<void> requestAge(int age) async {
-  List<dynamic> characters = await fetchLiveList(); 
+  List<dynamic> characters = await fetchLiveList();
 
   for (var character in characters) {
-    if (character["age"] >= age) {
+    if (character["age"] > age) {
       print(
         "O personagem ${character["name"]} tem mais de $age de idade, tendo ${character["age"]} anos!",
       );
@@ -54,7 +49,7 @@ Future<void> requestAge(int age) async {
 }
 
 Future<void> requestAnime(String anime) async {
-  List<dynamic> characters = await fetchLiveList(); 
+  List<dynamic> characters = await fetchLiveList();
 
   for (var character in characters) {
     if (character["anime"] == anime) {
@@ -69,7 +64,7 @@ Future<void> sendDataAsync(Map<String, dynamic> mapAccount) async {
   // Antes: String content = json.encode(listAccounts);
 
   // Depois (Com 2 espaços de identação):
-  JsonEncoder encoder = JsonEncoder.withIndent('  '); 
+  JsonEncoder encoder = JsonEncoder.withIndent('  ');
   String content = encoder.convert(listAccounts);
 
   String url = gistId;
