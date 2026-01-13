@@ -2,76 +2,73 @@ import 'package:dart_animes/api_key.dart';
 import 'package:http/http.dart';
 import 'dart:convert';
 
-const String GistRawUrl = "https://gist.githubusercontent.com/Joel-116/98da7e34252e27f87f1e875080e62365/raw/93f79b6599568c076e113e5e9ad91f4768fb7460/animes.json";
-const String GistId = "https://api.github.com/gists/98da7e34252e27f87f1e875080e62365";
+const String gistRawUrl =
+    "https://gist.githubusercontent.com/Joel-116/98da7e34252e27f87f1e875080e62365/raw/93f79b6599568c076e113e5e9ad91f4768fb7460/animes.json";
+const String gistId =
+    "https://api.github.com/gists/98da7e34252e27f87f1e875080e62365";
 
 void main() {
- sendDataAsync(
-    {"name" : "Yuji Itadori",
-    "age" : 17,
-    "anime" : "Jujutsu Kaisen",
-    "energy" : "Juryoku"},
+  sendDataAsync({
+    "name": "Megumi Fushiguro",
+    "age": 16,
+    "anime": "Jujutsu Kaisen",
+    "energy": "Juryoku",
+  });
+}
+
+Future<List<dynamic>> fetchLiveList() async {
+  Response response = await get(
+    Uri.parse(gistId),
+    headers: {"Authorization": "Bearer $githubApiKey"},
   );
+
+  if (response.statusCode == 200) {
+    Map<String, dynamic> gistData = json.decode(response.body);
+    String content = gistData['files']['animes.json']['content'];
+    return json.decode(content);
+  }
+  return [];
 }
 
 void requestEnergy(String energy) async {
-  String url = GistRawUrl;
-
-  Response response = await get(Uri.parse(url));
-
-  List<dynamic> listResponse = json.decode(response.body);
-
-  for (var character in listResponse) {
-    if(character["energy"] == energy) {
+  List<dynamic> characters = await fetchLiveList(); 
+  for (var character in characters) {
+    if (character["energy"] == energy) {
       print("O personagem ${character["name"]} usa a energia $energy");
     }
   }
-  
 }
 
 Future<void> requestAge(int age) async {
-  String url = GistRawUrl;
+  List<dynamic> characters = await fetchLiveList(); 
 
-  Response response = await get(Uri.parse(url));
-
-  List<dynamic> listResponse = json.decode(response.body);
-
-  for(var character in listResponse) {
-    if(character["age"] >= age) {
-      print("O personagem ${character["name"]} tem mais de $age de idade, tendo ${character["age"]} anos!");
-    } else if(character["age"] == age) {
+  for (var character in characters) {
+    if (character["age"] >= age) {
+      print(
+        "O personagem ${character["name"]} tem mais de $age de idade, tendo ${character["age"]} anos!",
+      );
+    } else if (character["age"] == age) {
       print("O personagem ${character["name"]} tem $age anos!");
     }
   }
 }
 
 Future<void> requestAnime(String anime) async {
-  String url = GistRawUrl;
+  List<dynamic> characters = await fetchLiveList(); 
 
-  Response response = await get(Uri.parse(url));
-
-  List<dynamic> listResponse = json.decode(response.body);
-
-  for(var character in listResponse) {
-    if(character["anime"] == anime) {
+  for (var character in characters) {
+    if (character["anime"] == anime) {
       print("O personagem ${character["name"]} é do anime $anime");
     }
   }
 }
 
-Future<List<dynamic>> requestDataAsync() async {
-  String url = GistRawUrl;
-  Response response = await get(Uri.parse(url));
-  return json.decode(response.body);
-}
-
-
 Future<void> sendDataAsync(Map<String, dynamic> mapAccount) async {
-  List<dynamic> listAccounts = await requestDataAsync();
+  List<dynamic> listAccounts = await fetchLiveList();
   listAccounts.add(mapAccount);
   String content = json.encode(listAccounts);
 
-  String url = GistId;
+  String url = gistId;
 
   Response response = await patch(
     Uri.parse(url),

@@ -17,7 +17,9 @@ Por favor, siga os passos abaixo:
    - Clique na seta ao lado de "Create secret gist" e selecione **"Create public gist"**.
 
 3. **Vínculo com o Código:**
-   - Após criar seu Gist, abra a página dele e clique em **"Raw"**, e copie a URL par a variável `GistRawUrl`.
-   - Para a variável `GistID`, pegue a URL do seu Gist e faça a seguinte alteração:
+   - No arquivo principal, localize a variável `GistID`.
+   - Pegue a URL do seu Gist e faça a seguinte alteração:
      De: https://github.com/usuario/ID_DO_GIST
      Para: https://api.github.com/gists/ID_DO_GIST
+   - Cole o Link na variável `GistID`.
+   - (Opcional) Você também pode colar o link do botão "Raw" na variável GistRawUrl para facilitar a visualização externa dos dados.
