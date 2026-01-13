@@ -66,7 +66,11 @@ Future<void> requestAnime(String anime) async {
 Future<void> sendDataAsync(Map<String, dynamic> mapAccount) async {
   List<dynamic> listAccounts = await fetchLiveList();
   listAccounts.add(mapAccount);
-  String content = json.encode(listAccounts);
+  // Antes: String content = json.encode(listAccounts);
+
+  // Depois (Com 2 espaços de identação):
+  JsonEncoder encoder = JsonEncoder.withIndent('  '); 
+  String content = encoder.convert(listAccounts);
 
   String url = gistId;
 
