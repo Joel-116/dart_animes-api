@@ -7,9 +7,7 @@ const String gistRawUrl =
 const String gistId =
     "https://api.github.com/gists/98da7e34252e27f87f1e875080e62365";
 
-void main() {
-  requestAge(16);
-}
+void main() {}
 
 Future<List<dynamic>> fetchLiveList() async {
   Response response = await get(
