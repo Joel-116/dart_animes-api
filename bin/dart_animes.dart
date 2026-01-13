@@ -9,8 +9,8 @@ const String gistId =
 
 void main() {
   sendDataAsync({
-    "name": "Megumi Fushiguro",
-    "age": 16,
+    "name": "Yuji Itadori",
+    "age": 17,
     "anime": "Jujutsu Kaisen",
     "energy": "Juryoku",
   });
