@@ -2,64 +2,65 @@ import 'package:dart_animes/api_key.dart';
 import 'package:http/http.dart';
 import 'dart:convert';
 
+const String GistRawUrl = "https://gist.githubusercontent.com/Joel-116/98da7e34252e27f87f1e875080e62365/raw/93f79b6599568c076e113e5e9ad91f4768fb7460/animes.json";
+const String GistId = "https://api.github.com/gists/98da7e34252e27f87f1e875080e62365";
+
 void main() {
  sendDataAsync(
-    {"nome" : "Yuji Itadori",
-    "idade" : "17",
+    {"name" : "Yuji Itadori",
+    "age" : 17,
     "anime" : "Jujutsu Kaisen",
-    "energia" : "Juryoku"},
+    "energy" : "Juryoku"},
   );
 }
 
-void requestEnergy(String energia) async {
-  String url =
-      "https://gist.githubusercontent.com/Joel-116/98da7e34252e27f87f1e875080e62365/raw/db39ce93d5b30c1a17e8f90111e91ccd9069cf70/gistfile1.txt";
+void requestEnergy(String energy) async {
+  String url = GistRawUrl;
 
   Response response = await get(Uri.parse(url));
 
   List<dynamic> listResponse = json.decode(response.body);
 
-  for (var personagem in listResponse) {
-    if(personagem["energia"] == energia) {
-      print("O personagem ${personagem["nome"]} usa a energia $energia");
+  for (var character in listResponse) {
+    if(character["energy"] == energy) {
+      print("O personagem ${character["name"]} usa a energia $energy");
     }
   }
   
 }
 
-Future<void> requestAge(int idade) async {
-  String url =
-      "https://gist.githubusercontent.com/Joel-116/98da7e34252e27f87f1e875080e62365/raw/db39ce93d5b30c1a17e8f90111e91ccd9069cf70/gistfile1.txt";
+Future<void> requestAge(int age) async {
+  String url = GistRawUrl;
 
   Response response = await get(Uri.parse(url));
 
   List<dynamic> listResponse = json.decode(response.body);
 
-  for(var personagem in listResponse) {
-    if(personagem["idade"] >= idade) {
-      print("O personagem ${personagem["nome"]} tem mais de $idade de idade, tendo ${personagem["idade"]} anos!");
+  for(var character in listResponse) {
+    if(character["age"] >= age) {
+      print("O personagem ${character["name"]} tem mais de $age de idade, tendo ${character["age"]} anos!");
+    } else if(character["age"] == age) {
+      print("O personagem ${character["name"]} tem $age anos!");
     }
   }
 }
 
 Future<void> requestAnime(String anime) async {
-  String url =
-      "https://gist.githubusercontent.com/Joel-116/98da7e34252e27f87f1e875080e62365/raw/db39ce93d5b30c1a17e8f90111e91ccd9069cf70/gistfile1.txt";
+  String url = GistRawUrl;
 
   Response response = await get(Uri.parse(url));
 
   List<dynamic> listResponse = json.decode(response.body);
 
-  for(var personagem in listResponse) {
-    if(personagem["anime"] == anime) {
-      print("O personagem ${personagem["nome"]} é do anime $anime");
+  for(var character in listResponse) {
+    if(character["anime"] == anime) {
+      print("O personagem ${character["name"]} é do anime $anime");
     }
   }
 }
 
 Future<List<dynamic>> requestDataAsync() async {
-  String url =
-      "https://gist.githubusercontent.com/Joel-116/98da7e34252e27f87f1e875080e62365/raw/db39ce93d5b30c1a17e8f90111e91ccd9069cf70/gistfile1.txt";
+  String url = GistRawUrl;
   Response response = await get(Uri.parse(url));
   return json.decode(response.body);
 }
@@ -70,7 +71,7 @@ Future<void> sendDataAsync(Map<String, dynamic> mapAccount) async {
   listAccounts.add(mapAccount);
   String content = json.encode(listAccounts);
 
-  String url = "https://api.github.com/gists/98da7e34252e27f87f1e875080e62365";
+  String url = GistId;
 
   Response response = await patch(
     Uri.parse(url),
