@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:dart_animes/api_key.dart';
 import 'package:http/http.dart';
 import 'dart:convert';
@@ -7,27 +8,57 @@ const String gistRawUrl =
 const String gistId =
     "https://api.github.com/gists/98da7e34252e27f87f1e875080e62365";
 
-void main() {}
+StreamController<dynamic> streamController = StreamController<dynamic>();
+
+void main() async {
+  streamController.stream.listen((dynamic date) {
+    print(date);
+  });
+  await requestAnime('Dragon Ball');
+  await requestEnergy('Ki');
+  await requestAge(42);
+}
 
 Future<List<dynamic>> fetchLiveList() async {
-  Response response = await get(
-    Uri.parse(gistId),
-    headers: {"Authorization": "Bearer $githubApiKey"},
-  );
+  try {
+    Response response = await get(
+      Uri.parse(gistId),
+      headers: {"Authorization": "Bearer $githubApiKey"},
+    ).timeout(const Duration(seconds: 10));
 
-  if (response.statusCode == 200) {
-    Map<String, dynamic> gistData = json.decode(response.body);
-    String content = gistData['files']['animes.json']['content'];
-    return json.decode(content);
+    if (response.statusCode.toString()[0] == "2") {
+      Map<String, dynamic> gistData = json.decode(response.body);
+      String content = gistData['files']['animes.json']['content'];
+      return json.decode(content);
+    } else {
+      streamController.add(
+        "${DateTime.now()} | Erro no servidor: ${response.statusCode}",
+      );
+    }
+  } catch (e) {
+    streamController.add(
+      "${DateTime.now()} | Erro de conexão: Verifique sua conexão com a internet.",
+    );
   }
   return [];
 }
 
-void requestEnergy(String energy) async {
+Future<void> requestEnergy(String energy) async {
   List<dynamic> characters = await fetchLiveList();
-  for (var character in characters) {
-    if (character["energy"] == energy) {
-      print("O personagem ${character["name"]} usa a energia $energy");
+
+  var matches = characters.where(
+    (c) => c["energy"].toString().toLowerCase() == energy.toLowerCase(),
+  );
+
+  if (matches.isEmpty) {
+    streamController.add(
+      "${DateTime.now()} | Não foi encontrado um personagem que usa a energia $energy.",
+    );
+  } else {
+    for (var c in matches) {
+      streamController.add(
+        "${DateTime.now()} | O personagem ${c["name"]} usa a energia $energy",
+      );
     }
   }
 }
@@ -37,11 +68,13 @@ Future<void> requestAge(int age) async {
 
   for (var character in characters) {
     if (character["age"] > age) {
-      print(
-        "O personagem ${character["name"]} tem mais de $age de idade, tendo ${character["age"]} anos!",
+      streamController.add(
+        "${DateTime.now()} | O personagem ${character["name"]} tem mais de $age de idade, tendo ${character["age"]} anos!",
       );
     } else if (character["age"] == age) {
-      print("O personagem ${character["name"]} tem $age anos!");
+      streamController.add(
+        "${DateTime.now()} | O personagem ${character["name"]} tem $age anos!",
+      );
     }
   }
 }
@@ -49,23 +82,37 @@ Future<void> requestAge(int age) async {
 Future<void> requestAnime(String anime) async {
   List<dynamic> characters = await fetchLiveList();
 
-  for (var character in characters) {
-    if (character["anime"] == anime) {
-      print("O personagem ${character["name"]} é do anime $anime");
+  var matches = characters.where(
+    (c) => c["anime"].toString().toLowerCase() == anime.toLowerCase(),
+  );
+
+  if (matches.isEmpty) {
+    streamController.add(
+      "${DateTime.now()} | O anime $anime não foi encontrado.",
+    );
+  } else {
+    for (var c in matches) {
+      streamController.add(
+        "${DateTime.now()} | O personagem ${c["name"]} é do anime $anime",
+      );
     }
   }
 }
 
 Future<void> deleteCharacter(String name) async {
   List<dynamic> listCharacter = await fetchLiveList();
-  
+
   int originalLength = listCharacter.length;
 
-  listCharacter.removeWhere((character) => 
-    character["name"].toString().toLowerCase() == name.toLowerCase());
+  listCharacter.removeWhere(
+    (character) =>
+        character["name"].toString().toLowerCase() == name.toLowerCase(),
+  );
 
   if (listCharacter.length == originalLength) {
-    print("Nenhum personagem encontrado com o nome: $name");
+    streamController.add(
+      "${DateTime.now()} | Não foi encontrado nenhum personagem com o nome: $name",
+    );
     return;
   }
 
@@ -83,17 +130,21 @@ Future<void> deleteCharacter(String name) async {
     }),
   );
 
-  if (response.statusCode == 200) {
-    print("Personagem '$name' removido com sucesso!");
+  if (response.statusCode.toString()[0] == "2") {
+    streamController.add(
+      "${DateTime.now()} | Personagem $name foi deletado com sucesso!",
+    );
   } else {
-    print("Erro ao deletar: ${response.statusCode}");
+    streamController.add(
+      "${DateTime.now()} | Ocorreu um erro durante a tentativa de deletar o personagem.",
+    );
   }
 }
 
 Future<void> sendDataAsync(Map<String, dynamic> mapCharacter) async {
   List<dynamic> listCharacter = await fetchLiveList();
   listCharacter.add(mapCharacter);
-  
+
   JsonEncoder encoder = JsonEncoder.withIndent('  ');
   String content = encoder.convert(listCharacter);
 
@@ -111,43 +162,11 @@ Future<void> sendDataAsync(Map<String, dynamic> mapCharacter) async {
     }),
   );
 
-  print(response.statusCode);
-
-  switch (response.statusCode) {
-    case 200:
-      // A requisição foi bem-sucedida, processa os dados
-      print('Dados recebidos: ${response.body}');
-      break;
-    case 201:
-      // Recurso criado com sucesso
-      print('Recurso criado com sucesso.');
-      break;
-    case 204:
-      // Nenhum conteúdo retornado
-      print('Operação concluída, mas sem dados para exibir.');
-      break;
-    case 400:
-      // Requisição inválida
-      print('Erro na requisição: ${response.reasonPhrase}');
-      break;
-    case 401:
-      // Não autorizado
-      print('Acesso não autorizado. Verifique suas credenciais.');
-      break;
-    case 403:
-      // Permissão
-      print("Você não tem a permissão necessária para editar este gist.");
-      break;
-    case 404:
-      // Recurso não encontrado
-      print('Recurso não encontrado.');
-      break;
-    case 500:
-      // Erro interno no servidor
-      print('Erro no servidor. Tente novamente mais tarde.');
-      break;
-    default:
-      // Outros códigos de erro
-      print('Erro desconhecido: ${response.statusCode}');
+  if (response.statusCode.toString()[0] == "2") {
+    streamController.add("${DateTime.now()} | A adição foi bem-sucedida.");
+  } else {
+    streamController.add(
+      "${DateTime.now()} | Ocorreu um problema durante a tentativa de adicionar um personagem.",
+    );
   }
 }
