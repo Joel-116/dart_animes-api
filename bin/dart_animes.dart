@@ -14,9 +14,14 @@ void main() async {
   streamController.stream.listen((dynamic date) {
     print(date);
   });
-  await requestAnime('Dragon Ball');
-  await requestEnergy('Ki');
-  await requestAge(42);
+
+  sendDataAsync({
+    "name": "Son Gohan",
+    "age": 91,
+    "anime": "Dragon Ball",
+    "energy": "Ki",
+    "isFavorite": false,
+  });
 }
 
 Future<List<dynamic>> fetchLiveList() async {
@@ -99,6 +104,77 @@ Future<void> requestAnime(String anime) async {
   }
 }
 
+Future<void> searchName(String name) async {
+  List<dynamic> characters = await fetchLiveList();
+
+  var matches = characters.where(
+    (c) => c["name"].toString().toLowerCase() == name.toLowerCase(),
+  );
+
+  if (matches.isEmpty) {
+    streamController.add(
+      "${DateTime.now()} | Ocorreu um erro durante a busca.",
+    );
+  } else {
+    for (var c in matches) {
+      streamController.add(
+        "${DateTime.now()} | \n Nome: ${c["name"]} \n Idade: ${c["age"]} \n Anime: ${c["anime"]} \n Energia: ${c["energy"]}",
+      );
+    }
+  }
+}
+
+Future<void> toggleFavorite(String name) async {
+  List<dynamic> characters = await fetchLiveList();
+  bool found = false;
+
+  for (var character in characters) {
+    if (character["name"].toString().toLowerCase() == name.toLowerCase()) {
+      bool currentStatus = character["isFavorite"] ?? false;
+      character["isFavorite"] = !currentStatus;
+
+      found = true;
+      streamController.add(
+        "${DateTime.now()} | Status de favorito do personagem $name alterado para: ${character["isFavorite"]}.",
+      );
+
+      break;
+    }
+  }
+
+  if (!found) {
+    streamController.add(
+      "${DateTime.now()} | Personagem $name não foi encontrado.",
+    );
+    return;
+  }
+
+  await updateGist(characters);
+}
+
+Future<void> updateGist(List<dynamic> list) async {
+  JsonEncoder encoder = JsonEncoder.withIndent('  ');
+  String content = encoder.convert(list);
+
+  Response response = await patch(
+    Uri.parse(gistId),
+    headers: {"Authorization": "Bearer $githubApiKey"},
+    body: json.encode({
+      "files": {
+        "animes.json": {"content": content},
+      },
+    }),
+  );
+
+  if (response.statusCode.toString()[0] == "2") {
+    streamController.add("${DateTime.now()} | A atualização foi um sucesso.");
+  } else {
+    streamController.add(
+      "${DateTime.now()} | Ocorreu um problema durante a tentativa favoritar o personagem",
+    );
+  }
+}
+
 Future<void> deleteCharacter(String name) async {
   List<dynamic> listCharacter = await fetchLiveList();
 
@@ -142,7 +218,40 @@ Future<void> deleteCharacter(String name) async {
 }
 
 Future<void> sendDataAsync(Map<String, dynamic> mapCharacter) async {
+  List<String> requiredKeys = ["name", "anime", "age", "energy", "isFavorite"];
+
+  for (var key in requiredKeys) {
+    if (!mapCharacter.containsKey(key) ||
+        mapCharacter[key].toString().trim().isEmpty) {
+      streamController.add(
+        "${DateTime.now()} | Erro: O campo '$key' é obrigatório.",
+      );
+      return;
+    }
+  }
+
+  if (mapCharacter["isFavorite"] is! bool) {
+    streamController.add(
+      "${DateTime.now()} | Erro: O isFavorite deve ser bool.",
+    );
+    return;
+  }
+
   List<dynamic> listCharacter = await fetchLiveList();
+
+  bool exists = listCharacter.any(
+    (c) =>
+        c["name"].toString().toLowerCase() ==
+        mapCharacter["name"].toString().toLowerCase(),
+  );
+
+  if (exists) {
+    streamController.add(
+      "${DateTime.now()} | O personagem ${mapCharacter["name"]} já está no JSON.",
+    );
+    return;
+  }
+
   listCharacter.add(mapCharacter);
 
   JsonEncoder encoder = JsonEncoder.withIndent('  ');
